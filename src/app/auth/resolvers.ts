@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'axios';
 import { prismaClient } from '../../clients/db';
 import JWTService from '../../services/JWTService';
 import { GraphqlContext, JWTUser } from '../../interfaces';
@@ -73,18 +73,27 @@ const mutations = {
             const payload = {
                 id: user.id,
                 username: user.username
-            } as JWTUser
+            } as JWTUser;
 
             const userToken = JWTService.generateTokenForUser(payload);
 
-            return userToken;
+            // Set the JWT token in the cookie
+            ctx.res.cookie('__moments_token', userToken, {
+                httpOnly: true, // Ensures the cookie is not accessible via JavaScript (security measure)
+                secure: true,  // Set to false for local dev (use true for production with HTTPS)
+                maxAge: 1000 * 60 * 60 * 24, // Cookie expires in 1 day
+                sameSite: 'none', // Use lowercase 'lax' for local dev, 'none' for production with HTTPS
+                path: '/' // Path to which the cookie applies
+            });
+            
+
+            return userToken; // Optionally, you can still return the token in the response
         } catch (error: any) {
             console.log(error, "error");
 
             throw new Error(error?.message || "Failed to authenticate with Google.");
         }
     },
-
 };
 
-export const resolvers = {queries, mutations }
+export const resolvers = { queries, mutations };
