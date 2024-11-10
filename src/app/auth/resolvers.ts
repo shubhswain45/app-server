@@ -82,7 +82,7 @@ const mutations = {
                 httpOnly: true, // Ensures the cookie is not accessible via JavaScript (security measure)
                 secure: true,  // Set to false for local dev (use true for production with HTTPS)
                 maxAge: 1000 * 60 * 60 * 24, // Cookie expires in 1 day
-                sameSite: 'none', // Use lowercase 'lax' for local dev, 'none' for production with HTTPS
+                sameSite: 'lax', // Use lowercase 'lax' for local dev, 'none' for production with HTTPS
                 path: '/' // Path to which the cookie applies
             });
             
