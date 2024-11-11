@@ -8,34 +8,60 @@ interface CreatePostPayload {
     imgURL: string;
 }
 
+// Define the type for the Like model
+type Like = {
+    userId: string;
+};
+
+// Define the type for the Post model including _count and likes
 type PostWithCount = {
     id: string;
     content: string | null;
     imgURL: string;
     authorId: string;
+    createdAt: Date; // Include createdAt
+    updatedAt: Date; // Include updatedAt
     _count: {
-        likes: number;
+        likes: number; // Count of likes
     };
-    likes: { userId: string }[]; // Adjust based on your actual likes structure
+    likes: Like[]; // Array of likes
+};
+
+// Define the return type for the response of getFeedPosts
+type FeedPostResponse = {
+    id: string;
+    content: string | null;
+    imgURL: string;
+    authorId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    totalLikeCount: number; // Total number of likes
+    userHasLiked: boolean; // Whether the current user has liked the post
 };
 
 const queries = {
-    getFeedPosts: async (parent: any, args: any, ctx: GraphqlContext) => {
+    getFeedPosts: async (parent: any, args: any, ctx: GraphqlContext): Promise<FeedPostResponse[] | null> => {
+        // Check if the user is authenticated
         if (!ctx.user?.id) {
-            return null;  // Return null if the user is not authenticated
+            return null; // Return null if the user is not authenticated
         }
 
+        // Fetch the first 5 posts from the database along with the count of likes
         const posts = await prismaClient.post.findMany({
             take: 5,
             include: {
-                _count: { select: { likes: true } },
+                _count: { select: { likes: true } }, // Include the count of likes
                 likes: {
-                    where: { userId: ctx.user.id },
+                    where: { userId: ctx.user.id }, // Only retrieve likes by the current user
                     select: { userId: true },
-                }
+                },
             },
         }) as PostWithCount[]; // Cast to your custom type
 
+        // Log the fetched posts for debugging
+        console.log(posts);
+        
+        // Map the posts to include totalLikeCount and userHasLiked properties
         return posts.map(post => ({
             ...post,
             totalLikeCount: post._count.likes,
