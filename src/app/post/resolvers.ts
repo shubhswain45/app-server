@@ -31,7 +31,7 @@ const queries = {
             totalLikeCount: post._count.likes,
             userHasLiked: post.likes.length > 0,  // Check if the current user has liked the post
         }));
-        
+          
     },
 };
 
