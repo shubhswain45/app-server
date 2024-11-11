@@ -22,7 +22,7 @@ const queries = {
                 likes: {
                     include: {
                         user: true, // Include user info for each like
-                    },
+                    },        
                 },
             },
         });
