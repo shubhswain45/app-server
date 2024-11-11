@@ -100,6 +100,7 @@ const mutations = {
                 // Create a like entry (Prisma will automatically link the user and post)
                 await prismaClient.like.create({
                     data: {
+                        dummy: "kkkk",
                         userId: ctx.user.id,  // User ID from the context
                         postId,  // Post ID to associate the like with
                     }
