@@ -12,7 +12,7 @@ const queries = {
     getFeedPosts: async (parent: any, args: any, ctx: GraphqlContext) => {
         // Ensure the user is authenticated
         console.log("ctx.user", ctx.user);
-        
+
         if (!ctx.user?.id) {
             return null
         }
@@ -21,7 +21,7 @@ const queries = {
         const posts = await prismaClient.post.findMany({
             take: 5,  // Limit to 5 posts
         })
-        
+
         return posts
     }
 }
@@ -61,7 +61,50 @@ const mutations = {
             console.error("Error creating post:", error);
             throw new Error("Failed to create post. Please try again.");
         }
+    },
+
+    likePost: async (parent: any, { postId }: { postId: string }, ctx: GraphqlContext) => {
+        try {
+            // Ensure the user is authenticated
+            if (!ctx.user) throw new Error("Please Login/Signup first!");
+    
+            // Attempt to delete the like (unlike the post)
+            await prismaClient.like.delete({
+                where: {
+                    userId_postId: {
+                        userId: ctx.user.id,  // User ID from the context
+                        postId,
+                    }
+                }
+            });
+    
+            // If successful, return a response indicating the post was unliked
+            return false;
+    
+        } catch (error: any) {
+            // If the like doesn't exist, handle the error and create the like (like the post)
+            if (error.code === 'P2025') { // This error code indicates that the record was not found
+                if (!ctx.user) throw new Error("User must be authenticated to like a post!");
+    
+                // Create a like entry (Prisma will automatically link the user and post)
+                await prismaClient.like.create({
+                    data: {
+                        userId: ctx.user.id,  // User ID from the context
+                        postId,  // Post ID to associate the like with
+                    }
+                });
+                return true;
+            }
+    
+            // Handle any other errors
+            console.error("Error toggling like:", error);
+            throw new Error(error.message || "An error occurred while toggling the like on the post.");
+        }
     }
+    
+    
+
+
 };
 
 const extraResolvers = {

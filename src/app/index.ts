@@ -17,13 +17,13 @@ export async function initServer() {
 
     // CORS configuration
     const corsOptions = {
-        origin: ['https://app-client-rho.vercel.app'], // your frontend URL
+        origin: ['http://localhost:3000'], // your frontend URL
         credentials: true, // Ensure cookies are sent with cross-origin requests
     };
 
     // Use CORS middleware
     app.use(cors(corsOptions));
-    app.use(bodyParser.json())
+    app.use(bodyParser.json({limit: "10mb"}))
 
     const graphqlServer = new ApolloServer<GraphqlContext>({
         typeDefs: `
