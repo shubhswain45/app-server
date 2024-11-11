@@ -78,7 +78,7 @@ const mutations = {
 
     likePost: async (parent: any, { postId }: { postId: string }, ctx: GraphqlContext) => {
         // Ensure the user is authenticated
-        if (!ctx.user) throw new Error("Please Login/Signup first!");
+        if (!ctx.user) throw new Error("Please Login/Signup first");
 
         try {
             // Attempt to delete the like (unlike the post)
