@@ -4,8 +4,8 @@ import { GraphqlContext } from "../../interfaces";
 import { v2 as cloudinary } from 'cloudinary';
 
 interface CreatePostPayload {
-    content?: string
-    imgURL: string
+    content?: string;
+    imgURL: string;
 }
 
 const queries = {
@@ -31,13 +31,8 @@ const queries = {
             totalLikeCount: post._count.likes,
             userHasLiked: post.likes.length > 0,  // Check if the current user has liked the post
         }));
-          
     },
 };
-
-
-
-
 
 const mutations = {
     createPost: async (
@@ -50,14 +45,12 @@ const mutations = {
 
         const { imgURL, content } = payload;
 
-        // Validate the image URL before uploading (you can add additional validation here if necessary)
+        // Validate the image URL before uploading
         if (!imgURL) throw new Error("Image URL is required");
 
         try {
             // Upload image to Cloudinary
-            const uploadResult = await cloudinary.uploader.upload(imgURL, {
-                // You can add more options like transformation, tags, etc.
-            });
+            const uploadResult = await cloudinary.uploader.upload(imgURL);
 
             // Create post in the database
             const post = await prismaClient.post.create({
@@ -77,10 +70,10 @@ const mutations = {
     },
 
     likePost: async (parent: any, { postId }: { postId: string }, ctx: GraphqlContext) => {
-        try {
-            // Ensure the user is authenticated
-            if (!ctx.user) throw new Error("Please Login/Signup first!");
+        // Ensure the user is authenticated
+        if (!ctx.user) throw new Error("Please Login/Signup first!");
 
+        try {
             // Attempt to delete the like (unlike the post)
             await prismaClient.like.delete({
                 where: {
@@ -92,13 +85,11 @@ const mutations = {
             });
 
             // If successful, return a response indicating the post was unliked
-            return false;
+            return false; // Post was unliked
 
         } catch (error: any) {
             // If the like doesn't exist, handle the error and create the like (like the post)
             if (error.code === 'P2025') { // This error code indicates that the record was not found
-                if (!ctx.user) throw new Error("User must be authenticated to like a post!");
-
                 // Create a like entry (Prisma will automatically link the user and post)
                 await prismaClient.like.create({
                     data: {
@@ -106,7 +97,7 @@ const mutations = {
                         postId,  // Post ID to associate the like with
                     }
                 });
-                return true;
+                return true; // Post was liked
             }
 
             // Handle any other errors
@@ -114,10 +105,6 @@ const mutations = {
             throw new Error(error.message || "An error occurred while toggling the like on the post.");
         }
     }
-
-
-
-
 };
 
 const extraResolvers = {
@@ -126,4 +113,4 @@ const extraResolvers = {
     }
 }
 
-export const resolvers = { queries, mutations, extraResolvers }
+export const resolvers = { queries, mutations, extraResolvers };

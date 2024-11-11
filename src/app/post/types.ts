@@ -11,7 +11,7 @@ type Post {
     content: String
     imgURL: String!
     author: User
-    totalLikeCount: Int!  # Like count for the post
-    hasLiked: Boolean!    # Whether the authenticated user has liked the post
+    totalLikeCount: Int!  # Total number of likes for the post
+    userHasLiked: Boolean!  # Indicates whether the authenticated user has liked the post
 }
 `
