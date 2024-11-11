@@ -13,37 +13,28 @@ const queries = {
         if (!ctx.user?.id) {
             return null;  // Return null if the user is not authenticated
         }
-    
-        // Fetch the first 5 posts from the database along with likes
+
+        // Fetch the first 5 posts from the database along with the count of likes
         const posts = await prismaClient.post.findMany({
-            take: 5,  // Limit to 5 posts
+            take: 5,
             include: {
+                _count: { select: { likes: true } },
                 likes: {
-                    where: {
-                        userId: ctx.user.id,  // Only include likes by the current user
-                    }
-                },
-            }
+                    where: { userId: ctx.user.id },  // Only retrieve likes by the current user
+                    select: { userId: true },
+                }
+            },
         });
-    
-        // Map over posts to add the count of likes and hasLiked flag
-        const postsWithHasLiked = posts.map(post => {
-            // Count the total likes for each post
-            const likeCount = post.likes.length;  // This gives us the number of likes
-            const hasLiked = likeCount > 0;  // If the user has liked this post, set hasLiked to true
-    
-            return {
-                ...post,
-                likeCount,  // Add the like count to the post
-                hasLiked,   // Add the hasLiked flag
-                likes: undefined,  // Optionally remove likes from the response to avoid duplication
-            };
-        });
-    
-        return postsWithHasLiked;
-    }
-    
+        
+        return posts.map(post => ({
+            ...post,
+            totalLikeCount: post._count.likes,
+            userHasLiked: post.likes.length > 0,  // Check if the current user has liked the post
+        }));
+        
+    },
 };
+
 
 
 
