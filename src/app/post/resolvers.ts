@@ -17,21 +17,19 @@ const queries = {
 
         // Fetch the first 5 posts from the database along with the likes relation
         const posts = await prismaClient.post.findMany({
-            take: 5,
-            select: {
-                id: true,
-                content: true,
-                imgURL: true,
-                createdAt: true,
-                updatedAt: true,
-                authorId: true,
+            take: 5, // Fetch the first 5 posts
+            include: {
                 likes: {
-                    select: {
-                        userId: true, // Only fetch the userId from likes to reduce data size
+                    include: {
+                        user: true, // Include user info for each like
                     },
                 },
             },
         });
+
+        if (!posts) {
+            return []; // Return empty array if no posts are found
+        }
 
         // Map the posts to include totalLikeCount and userHasLiked properties
         return posts.map(post => {
@@ -45,6 +43,7 @@ const queries = {
         });
     },
 };
+
 
 
 
