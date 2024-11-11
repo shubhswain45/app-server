@@ -8,25 +8,35 @@ interface CreatePostPayload {
     imgURL: string;
 }
 
+type PostWithCount = {
+    id: string;
+    content: string | null;
+    imgURL: string;
+    authorId: string;
+    _count: {
+        likes: number;
+    };
+    likes: { userId: string }[]; // Adjust based on your actual likes structure
+};
+
 const queries = {
     getFeedPosts: async (parent: any, args: any, ctx: GraphqlContext) => {
         if (!ctx.user?.id) {
             return null;  // Return null if the user is not authenticated
         }
 
-        // Fetch the first 5 posts from the database along with the count of likes
         const posts = await prismaClient.post.findMany({
             take: 5,
             include: {
                 _count: { select: { likes: true } },
                 likes: {
-                    where: { userId: ctx.user.id },  // Only retrieve likes by the current user
+                    where: { userId: ctx.user.id },
                     select: { userId: true },
                 }
             },
-        });
+        }) as PostWithCount[]; // Cast to your custom type
 
-        return posts.map((post: any) => ({  // Use 'any' temporarily to bypass TypeScript errors
+        return posts.map(post => ({
             ...post,
             totalLikeCount: post._count.likes,
             userHasLiked: post.likes.length > 0,
