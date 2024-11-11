@@ -10,21 +10,41 @@ interface CreatePostPayload {
 
 const queries = {
     getFeedPosts: async (parent: any, args: any, ctx: GraphqlContext) => {
-        // Ensure the user is authenticated
-        console.log("ctx.user", ctx.user);
-
         if (!ctx.user?.id) {
-            return null
+            return null;
         }
 
-        // Fetch the first 5 posts from the database
+        // Fetch the first 5 posts from the database, along with the count of likes
         const posts = await prismaClient.post.findMany({
             take: 5,  // Limit to 5 posts
-        })
+            include: {
+                _count: {
+                    select: {
+                        likes: true,  // Count the number of likes for each post
+                    }
+                },
+                // Check if the user has liked the post (no need for select here)
+                likes: {
+                    where: {
+                        userId: ctx.user.id,  // Only include likes by the current user
+                    }
+                }
+            }
+        });
 
-        return posts
+        // Add the hasLiked field to each post
+        const postsWithHasLiked = posts.map(post => ({
+            ...post,
+            hasLiked: post.likes.length > 0,  // If the user has liked this post, set hasLiked to true
+            likes: undefined,  // Remove the likes data from the response (optional)
+        }));
+
+        return postsWithHasLiked;
     }
-}
+};
+
+
+
 
 const mutations = {
     createPost: async (
@@ -67,7 +87,7 @@ const mutations = {
         try {
             // Ensure the user is authenticated
             if (!ctx.user) throw new Error("Please Login/Signup first!");
-    
+
             // Attempt to delete the like (unlike the post)
             await prismaClient.like.delete({
                 where: {
@@ -77,15 +97,15 @@ const mutations = {
                     }
                 }
             });
-    
+
             // If successful, return a response indicating the post was unliked
             return false;
-    
+
         } catch (error: any) {
             // If the like doesn't exist, handle the error and create the like (like the post)
             if (error.code === 'P2025') { // This error code indicates that the record was not found
                 if (!ctx.user) throw new Error("User must be authenticated to like a post!");
-    
+
                 // Create a like entry (Prisma will automatically link the user and post)
                 await prismaClient.like.create({
                     data: {
@@ -95,14 +115,14 @@ const mutations = {
                 });
                 return true;
             }
-    
+
             // Handle any other errors
             console.error("Error toggling like:", error);
             throw new Error(error.message || "An error occurred while toggling the like on the post.");
         }
     }
-    
-    
+
+
 
 
 };
