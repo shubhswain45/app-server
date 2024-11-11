@@ -11,29 +11,38 @@ interface CreatePostPayload {
 const queries = {
     getFeedPosts: async (parent: any, args: any, ctx: GraphqlContext) => {
         // Check if the user is authenticated
-        if (!ctx.user?.id) {
-            return null; // Return null if the user is not authenticated
-        }
+        // if (!ctx.user?.id) {
+        //     return null; // Return null if the user is not authenticated
+        // }
 
-        // Fetch the first 5 posts from the database along with the count of likes
+        // Fetch the first 5 posts from the database along with the count of likes and only necessary fields
         const posts = await prismaClient.post.findMany({
             take: 5,
             include: {
-                _count: { select: { likes: true } }, // Include the count of likes
+                likes: {
+                    select: {
+                        userId: true, // Only fetch the userId of the likes to reduce the data size
+                    },
+                },
             },
-        }); // Cast to your custom type
+        });
 
-        // Log the fetched posts for debugging
-        console.log(posts);
+        console.log("posts", posts);
         
         // Map the posts to include totalLikeCount and userHasLiked properties
-        return posts.map(post => ({
-            ...post,
-            totalLikeCount: post._count.likes,
-            userHasLiked: false,
-        }));
+        return posts.map(post => {
+            const userHasLiked = post.likes.some(like => like.userId === ctx.user?.id);
+
+            return {
+                ...post,
+                totalLikeCount: post.likes.length,
+                userHasLiked,
+            };
+        });
     },
 };
+
+
 
 const mutations = {
     createPost: async (
