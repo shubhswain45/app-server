@@ -25,11 +25,11 @@ const queries = {
                 }
             },
         });
-        
-        return posts.map(post => ({
+
+        return posts.map((post: any) => ({  // Use 'any' temporarily to bypass TypeScript errors
             ...post,
             totalLikeCount: post._count.likes,
-            userHasLiked: post.likes.length > 0,  // Check if the current user has liked the post
+            userHasLiked: post.likes.length > 0,
         }));
     },
 };
